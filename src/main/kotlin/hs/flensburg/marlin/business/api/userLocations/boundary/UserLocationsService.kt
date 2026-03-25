@@ -6,6 +6,7 @@ import hs.flensburg.marlin.business.App
 import hs.flensburg.marlin.business.JEnv
 import hs.flensburg.marlin.business.ServiceLayerError
 import hs.flensburg.marlin.business.api.userLocations.entity.CreateOrUpdateUserLocationRequest
+import hs.flensburg.marlin.business.api.userLocations.entity.UserLocationDTO
 import hs.flensburg.marlin.business.api.users.boundary.UserService
 import hs.flensburg.marlin.database.generated.tables.pojos.UserLocations
 

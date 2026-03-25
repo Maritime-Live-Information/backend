@@ -2,6 +2,7 @@ import de.lambda9.tailwind.jooq.JIO
 import de.lambda9.tailwind.jooq.Jooq
 import hs.flensburg.marlin.business.ApiError
 import hs.flensburg.marlin.business.ServiceLayerError
+import hs.flensburg.marlin.business.api.notificationLocation.entity.NotificationLocationDTO
 import hs.flensburg.marlin.database.generated.tables.pojos.NotificationLocations
 import hs.flensburg.marlin.database.generated.tables.references.NOTIFICATION_LOCATIONS
 

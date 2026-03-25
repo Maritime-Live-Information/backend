@@ -2,6 +2,7 @@ import de.lambda9.tailwind.jooq.JIO
 import de.lambda9.tailwind.jooq.Jooq
 import hs.flensburg.marlin.business.ApiError
 import hs.flensburg.marlin.business.ServiceLayerError
+import hs.flensburg.marlin.business.api.userLocations.entity.UserLocationDTO
 import hs.flensburg.marlin.database.generated.tables.pojos.UserLocations
 import hs.flensburg.marlin.database.generated.tables.references.USER_LOCATIONS
 

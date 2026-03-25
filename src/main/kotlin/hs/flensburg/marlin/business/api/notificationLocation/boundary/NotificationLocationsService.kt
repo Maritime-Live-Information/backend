@@ -6,6 +6,7 @@ import hs.flensburg.marlin.business.App
 import hs.flensburg.marlin.business.JEnv
 import hs.flensburg.marlin.business.ServiceLayerError
 import hs.flensburg.marlin.business.api.notificationLocation.entity.CreateOrUpdateNotificationLocationRequest
+import hs.flensburg.marlin.business.api.notificationLocation.entity.NotificationLocationDTO
 import hs.flensburg.marlin.database.generated.tables.pojos.NotificationLocations
 
 object NotificationLocationsService {

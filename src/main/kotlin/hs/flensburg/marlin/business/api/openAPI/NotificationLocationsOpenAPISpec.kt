@@ -1,7 +1,7 @@
 package hs.flensburg.marlin.business.api.openAPI
 
-import hs.flensburg.marlin.business.api.notificationLocation.entity.CreateOrUpdateNotificationLocationRequest
 import hs.flensburg.marlin.business.api.notificationLocation.entity.NotificationLocationDTO
+import hs.flensburg.marlin.business.api.notificationLocation.entity.CreateOrUpdateNotificationLocationRequest
 import io.github.smiley4.ktoropenapi.config.RouteConfig
 import io.ktor.http.HttpStatusCode
 
