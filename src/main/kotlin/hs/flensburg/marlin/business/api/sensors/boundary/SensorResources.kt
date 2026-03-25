@@ -24,134 +24,134 @@ import io.ktor.server.routing.routing
 fun Application.configureSensors() {
     routing {
         authenticate(Realm.COMMON.value, Realm.API_KEY.value, optional = true) {
-        get("/sensors", SensorsOpenAPISpec.getAllSensors) {
-            call.respondKIO(SensorService.getAllSensors())
-        }
-
-        get("/measurementtypes", SensorsOpenAPISpec.getAllMeasurementTypes) {
-            call.respondKIO(SensorService.getAllMeasurementTypes())
-        }
-
-        get("/locations", SensorsOpenAPISpec.getAllLocations) {
-            val timezone = TimezonesService.getClientTimeZoneFromIPOrQueryParam(
-                call.parameters["timezone"],
-                call.request.origin.remoteAddress
-            )
-
-                call.respondKIO(LocationService.getAllLocations(timezone))
+            get("/sensors", SensorsOpenAPISpec.getAllSensors) {
+                call.respondKIO(SensorService.getAllSensors())
             }
 
-        get("/measurements", SensorsOpenAPISpec.getAllMeasurements) {
-            call.respondKIO(SensorService.getAllMeasurements())
-        }
-
-        get("/latestmeasurements", SensorsOpenAPISpec.getLatestMeasurements) {
-            call.respondKIO(SensorService.getLocationsWithLatestMeasurements(""))
-        }
-
-        get("/latestmeasurementsNEW", SensorsOpenAPISpec.getLatestMeasurementsNew) {
-            call.respondKIO(
-                SensorService.getLocationsWithLatestMeasurementsNEW(
-                    call.parameters["timezone"] ?: "DEFAULT",
-                    call.request.origin.remoteAddress,
-                    call.parameters["units"] ?: "metric"
-                )
-            )
-        }
-        get(
-            "/location/{id}/measurementsWithinTimeRangeFAST",
-            SensorsOpenAPISpec.getLocationMeasurementsWithinTimeRangeFast
-        ) {
-            val locationId = call.parameters["id"]?.toLongOrNull()
-                ?: return@get call.respondText("Missing or wrong id", status = HttpStatusCode.BadRequest)
-
-                val timeRange = call.parameters["timeRange"] ?: "24h"
-
-            call.respondKIO(
-                SensorService.getLocationByIDWithMeasurementsWithinTimespanFAST(
-                    locationId,
-                    SensorMeasurementsTimeRange.fromString(timeRange) ?: return@get call.respondText(
-                        "wrong timeRange",
-                        status = HttpStatusCode.BadRequest
-                    ),
-                    call.parameters["timezone"] ?: "DEFAULT",
-                    call.request.origin.remoteAddress,
-                    call.parameters["units"] ?: "metric"
-                )
-            )
-        }
-        authenticate(Realm.COMMON.toString(), optional = true) {
-            get("/latestmeasurements_v3", SensorsOpenAPISpec.getLatestMeasurementsV3) {
-                val user = call.principal<LoggedInUser>()
-                val units =
-                    UnitsService.withResolvedUnits(call.parameters["units"], user?.id).unsafeRunSync(call.kioEnv)
-                        .getOrElse {
-                            return@get call.respond(HttpStatusCode.InternalServerError)
-                        }
-
-                call.respondKIO(
-                    SensorService.getLocationsWithLatestMeasurementsV3(
-                        call.parameters["timezone"] ?: "DEFAULT",
-                        call.request.origin.remoteAddress,
-                        units,
-                    )
-                )
+            get("/measurementtypes", SensorsOpenAPISpec.getAllMeasurementTypes) {
+                call.respondKIO(SensorService.getAllMeasurementTypes())
             }
 
-            get("/location/{id}/latestmeasurements", SensorsOpenAPISpec.getLocationLatestMeasurements) {
-                val locationId = call.parameters["id"]?.toLongOrNull()
-                    ?: return@get call.respondText("Missing or wrong id", status = HttpStatusCode.BadRequest)
-
-                val user = call.principal<LoggedInUser>()
-
-                val tz = TimezonesService.getClientTimeZoneFromIPOrQueryParam(
+            get("/locations", SensorsOpenAPISpec.getAllLocations) {
+                val timezone = TimezonesService.getClientTimeZoneFromIPOrQueryParam(
                     call.parameters["timezone"],
                     call.request.origin.remoteAddress
                 )
 
-                val units =
-                    UnitsService.withResolvedUnits(call.parameters["units"], user?.id)
-                        .unsafeRunSync(call.kioEnv)
-                        .getOrElse {
-                            return@get call.respond(HttpStatusCode.InternalServerError)
-                        }
-
-                call.respondKIO(SensorService.getSingleLocationWithLatestMeasurements(locationId, tz, units))
+                call.respondKIO(LocationService.getAllLocations(timezone))
             }
 
+            get("/measurements", SensorsOpenAPISpec.getAllMeasurements) {
+                call.respondKIO(SensorService.getAllMeasurements())
+            }
+
+            get("/latestmeasurements", SensorsOpenAPISpec.getLatestMeasurements) {
+                call.respondKIO(SensorService.getLocationsWithLatestMeasurements(""))
+            }
+
+            get("/latestmeasurementsNEW", SensorsOpenAPISpec.getLatestMeasurementsNew) {
+                call.respondKIO(
+                    SensorService.getLocationsWithLatestMeasurementsNEW(
+                        call.parameters["timezone"] ?: "DEFAULT",
+                        call.request.origin.remoteAddress,
+                        call.parameters["units"] ?: "metric"
+                    )
+                )
+            }
             get(
-                "/location/{id}/measurementsWithinTimeRange_v3",
-                SensorsOpenAPISpec.getLocationMeasurementsWithinTimeRangeV3
+                "/location/{id}/measurementsWithinTimeRangeFAST",
+                SensorsOpenAPISpec.getLocationMeasurementsWithinTimeRangeFast
             ) {
                 val locationId = call.parameters["id"]?.toLongOrNull()
                     ?: return@get call.respondText("Missing or wrong id", status = HttpStatusCode.BadRequest)
 
-                val user = call.principal<LoggedInUser>()
-
-                val timeRange = SensorMeasurementsTimeRange.fromString(call.parameters["timeRange"] ?: "24h")
-                    ?: return@get call.respondText(
-                        "wrong timeRange",
-                        status = HttpStatusCode.BadRequest
-                    )
-
-                val units =
-                    UnitsService.withResolvedUnits(call.parameters["units"], user?.id).unsafeRunSync(call.kioEnv)
-                        .getOrElse {
-                            return@get call.respond(HttpStatusCode.InternalServerError)
-                        }
-
-
+                val timeRange = call.parameters["timeRange"] ?: "24h"
 
                 call.respondKIO(
-                    SensorService.getLocationByIDWithMeasurementsWithinTimespanV3(
+                    SensorService.getLocationByIDWithMeasurementsWithinTimespanFAST(
                         locationId,
-                        timeRange,
+                        SensorMeasurementsTimeRange.fromString(timeRange) ?: return@get call.respondText(
+                            "wrong timeRange",
+                            status = HttpStatusCode.BadRequest
+                        ),
                         call.parameters["timezone"] ?: "DEFAULT",
                         call.request.origin.remoteAddress,
-                        units,
+                        call.parameters["units"] ?: "metric"
                     )
                 )
             }
+            authenticate(Realm.COMMON.toString(), optional = true) {
+                get("/latestmeasurements_v3", SensorsOpenAPISpec.getLatestMeasurementsV3) {
+                    val user = call.principal<LoggedInUser>()
+                    val units =
+                        UnitsService.withResolvedUnits(call.parameters["units"], user?.id).unsafeRunSync(call.kioEnv)
+                            .getOrElse {
+                                return@get call.respond(HttpStatusCode.InternalServerError)
+                            }
+
+                    call.respondKIO(
+                        SensorService.getLocationsWithLatestMeasurementsV3(
+                            call.parameters["timezone"] ?: "DEFAULT",
+                            call.request.origin.remoteAddress,
+                            units,
+                        )
+                    )
+                }
+
+                get("/location/{id}/latestmeasurements", SensorsOpenAPISpec.getLocationLatestMeasurements) {
+                    val locationId = call.parameters["id"]?.toLongOrNull()
+                        ?: return@get call.respondText("Missing or wrong id", status = HttpStatusCode.BadRequest)
+
+                    val user = call.principal<LoggedInUser>()
+
+                    val tz = TimezonesService.getClientTimeZoneFromIPOrQueryParam(
+                        call.parameters["timezone"],
+                        call.request.origin.remoteAddress
+                    )
+
+                    val units =
+                        UnitsService.withResolvedUnits(call.parameters["units"], user?.id)
+                            .unsafeRunSync(call.kioEnv)
+                            .getOrElse {
+                                return@get call.respond(HttpStatusCode.InternalServerError)
+                            }
+
+                    call.respondKIO(SensorService.getSingleLocationWithLatestMeasurements(locationId, tz, units))
+                }
+
+                get(
+                    "/location/{id}/measurementsWithinTimeRange_v3",
+                    SensorsOpenAPISpec.getLocationMeasurementsWithinTimeRangeV3
+                ) {
+                    val locationId = call.parameters["id"]?.toLongOrNull()
+                        ?: return@get call.respondText("Missing or wrong id", status = HttpStatusCode.BadRequest)
+
+                    val user = call.principal<LoggedInUser>()
+
+                    val timeRange = SensorMeasurementsTimeRange.fromString(call.parameters["timeRange"] ?: "24h")
+                        ?: return@get call.respondText(
+                            "wrong timeRange",
+                            status = HttpStatusCode.BadRequest
+                        )
+
+                    val units =
+                        UnitsService.withResolvedUnits(call.parameters["units"], user?.id).unsafeRunSync(call.kioEnv)
+                            .getOrElse {
+                                return@get call.respond(HttpStatusCode.InternalServerError)
+                            }
+
+
+
+                    call.respondKIO(
+                        SensorService.getLocationByIDWithMeasurementsWithinTimespanV3(
+                            locationId,
+                            timeRange,
+                            call.parameters["timezone"] ?: "DEFAULT",
+                            call.request.origin.remoteAddress,
+                            units,
+                        )
+                    )
+                }
+            }
         }
     }
-}
