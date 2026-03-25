@@ -1,6 +1,5 @@
 package hs.flensburg.marlin.business.api.userDevice.entity
 
-import hs.flensburg.marlin.database.generated.tables.pojos.UserDeviceView
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -10,11 +9,11 @@ data class UserDevice(
     var userId: Long,
 ) {
     companion object {
-        fun from(userDeviceView: UserDeviceView): UserDevice {
+        fun from(userDevice: hs.flensburg.marlin.database.generated.tables.pojos.UserDevice): UserDevice {
             return UserDevice(
-                id = userDeviceView.id!!,
-                fcmToken = userDeviceView.fcmToken!!,
-                userId= userDeviceView.userId!!
+                id = userDevice.id!!,
+                fcmToken = userDevice.fcmToken!!,
+                userId= userDevice.userId!!
             )
         }
     }

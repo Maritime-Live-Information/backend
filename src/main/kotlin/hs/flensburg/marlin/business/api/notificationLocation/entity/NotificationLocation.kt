@@ -1,3 +1,5 @@
+package hs.flensburg.marlin.business.api.notificationLocation.entity
+
 import hs.flensburg.marlin.database.generated.tables.pojos.NotificationLocations
 import kotlinx.serialization.Serializable
 

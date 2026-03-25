@@ -1,3 +1,5 @@
+package hs.flensburg.marlin.business.api.userLocations.entity
+
 import hs.flensburg.marlin.database.generated.tables.pojos.UserLocations
 import kotlinx.serialization.Serializable
 

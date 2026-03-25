@@ -1,109 +1,43 @@
 package hs.flensburg.marlin.business.api.userDevice.boundary
 
+import hs.flensburg.marlin.business.api.auth.entity.LoggedInUser
+import hs.flensburg.marlin.business.api.openAPI.UserDeviceOpenAPISpec
 import hs.flensburg.marlin.business.api.userDevice.entity.CreateUserDeviceRequest
-import hs.flensburg.marlin.business.api.userDevice.entity.UserDevice
+import hs.flensburg.marlin.plugins.Realm
+import hs.flensburg.marlin.plugins.authenticate
 import hs.flensburg.marlin.plugins.respondKIO
 import io.github.smiley4.ktoropenapi.delete
 import io.github.smiley4.ktoropenapi.get
 import io.github.smiley4.ktoropenapi.post
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
 import io.ktor.server.routing.routing
-import kotlin.text.toLong
 
 fun Application.configureUserDevices() {
     routing {
-        get(
-            path = "/user-device/{id}",
-            builder = {
-                description = "Get a user device by its ID "
-                tags("user-device")
-                request {
-                    pathParameter<Long>("id") {
-                        description = "ID of the user device"
-                    }
-                }
-                response {
-                    HttpStatusCode.OK to {
-                        body<UserDevice>()
-                    }
-                    HttpStatusCode.NotFound to {
-                        body<String>()
-                    }
-                }
+        authenticate(Realm.COMMON) {
+            get("/user-device", UserDeviceOpenAPISpec.getUserDevice) {
+                val user = call.principal<LoggedInUser>()!!
+                call.respondKIO(UserDeviceService.getUserDevice(user.id))
             }
-        ) {
-            val id = call.parameters["id"]!!.toLong()
-            call.respondKIO(UserDeviceService.getUserDevice(id))
-        }
 
-        get(
-            path = "/user-device/all/{userId}",
-            builder = {
-                description = "Get all devices of a user by userId"
-                tags("user-device")
-                request {
-                    pathParameter<Long>("id") {
-                        description = "userId of the user"
-                    }
-                }
-                response {
-                    HttpStatusCode.OK to {
-                        body<UserDevice>()
-                    }
-                    HttpStatusCode.NotFound to {
-                        body<String>()
-                    }
-                }
+            get("/user-device/all", UserDeviceOpenAPISpec.getAllUserDevices) {
+                val user = call.principal<LoggedInUser>()!!
+                call.respondKIO(UserDeviceService.getAllUserDevices(user.id))
             }
-        ) {
-            val userId = call.parameters["userId"]!!.toLong()
-            call.respondKIO(UserDeviceService.getAllUserDevices(userId))
-        }
 
-        post(
-            path = "/user-device",
-            builder = {
-                description = "Create a user device entry"
-                tags("user-device")
-                request {
-                    body<CreateUserDeviceRequest>()
-                }
-                response {
-                    HttpStatusCode.Created to {
-                        body<UserDevice>()
-                    }
-                    HttpStatusCode.BadRequest to {
-                        body<String>()
-                    }
-                }
+            post("/user-device", UserDeviceOpenAPISpec.createUserDevice) {
+                val user = call.principal<LoggedInUser>()!!
+                val request = call.receive<CreateUserDeviceRequest>()
+                call.respondKIO(UserDeviceService.createDevice(user.id, request))
             }
-        ) {
-            val request = call.receive<CreateUserDeviceRequest>()
-            call.respondKIO(UserDeviceService.createDevice(request.userId,request))
-        }
 
-        delete(
-            path = "/user-device/{id}",
-            builder = {
-                description = "Delete a user's device by ID."
-                tags("user-device")
-                request {
-                    pathParameter<Long>("id") {
-                        description = "ID of the user device entry"
-                    }
-                }
-                response {
-                    HttpStatusCode.NoContent to {}
-                    HttpStatusCode.NotFound to {
-                        body<String>()
-                    }
-                }
+            delete("/user-device/{id}", UserDeviceOpenAPISpec.deleteUserDevice) {
+                val user = call.principal<LoggedInUser>()!!
+                val id = call.parameters["id"]!!.toLong()
+                call.respondKIO(UserDeviceService.deleteUserDevice(user.id, id))
             }
-        ) {
-            val id = call.parameters["id"]!!.toLong()
-            call.respondKIO(UserDeviceService.deleteUserDevice(id))
         }
     }
 }

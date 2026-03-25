@@ -1,4 +1,5 @@
-package hs.flensburg.marlin.business.api.notifications
+package hs.flensburg.marlin.business.api.notifications.boundary
+
 import hs.flensburg.marlin.business.httpclient
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody

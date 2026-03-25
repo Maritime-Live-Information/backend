@@ -1,7 +1,10 @@
+package hs.flensburg.marlin.business.api.notificationLocation.control
+
 import de.lambda9.tailwind.jooq.JIO
 import de.lambda9.tailwind.jooq.Jooq
 import hs.flensburg.marlin.business.ApiError
 import hs.flensburg.marlin.business.ServiceLayerError
+import hs.flensburg.marlin.business.api.notificationLocation.entity.NotificationLocationDTO
 import hs.flensburg.marlin.database.generated.tables.pojos.NotificationLocations
 import hs.flensburg.marlin.database.generated.tables.references.NOTIFICATION_LOCATIONS
 
@@ -34,7 +37,7 @@ object NotificationLocationsRepo {
             .fetchOneInto(NotificationLocations::class.java)
     }
 
-    fun fetchAllByLocationId(locationId: Long): JIO<List<NotificationLocationDTO?>> = Jooq.query {
+    fun fetchAllByLocationId(locationId: Long): JIO<List<NotificationLocationDTO>> = Jooq.query {
         selectFrom(NOTIFICATION_LOCATIONS)
             .where(NOTIFICATION_LOCATIONS.LOCATION_ID.eq(locationId))
             .fetchInto(NotificationLocations::class.java)

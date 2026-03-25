@@ -5,7 +5,6 @@ import de.lambda9.tailwind.core.extensions.kio.onNullFail
 import de.lambda9.tailwind.core.extensions.kio.orDie
 import hs.flensburg.marlin.business.ApiError
 import hs.flensburg.marlin.business.App
-import hs.flensburg.marlin.business.JEnv
 import hs.flensburg.marlin.business.ServiceLayerError
 import hs.flensburg.marlin.business.api.notificationMeasurementRule.control.NotificationMeasurementRuleRepo
 import hs.flensburg.marlin.business.api.notificationMeasurementRule.entity.CreateOrUpdateNotificationMeasurementRuleRequest
@@ -30,55 +29,68 @@ object NotificationMeasurementRuleService {
         }
     }
 
-    fun getNotificationMeasurementRule(id: Long): App<NotificationMeasurementRuleService.Error, NotificationMeasurementRuleDTO> = KIO.comprehension {
-        NotificationMeasurementRuleRepo.fetchById(id).orDie().onNullFail { NotificationMeasurementRuleService.Error.NotFound }.map { NotificationMeasurementRuleDTO.from(it) }
+    fun getNotificationMeasurementRule(userId: Long, ruleId: Long): App<Error, NotificationMeasurementRuleDTO> =
+        KIO.comprehension {
+            NotificationMeasurementRuleRepo.fetchById(userId, ruleId).orDie().onNullFail { Error.NotFound }
+                .map { NotificationMeasurementRuleDTO.from(it) }
+        }
+
+    fun getAllNotificationMeasurementRulesByLocationId(locationId: Long): App<Error, List<NotificationMeasurementRuleDTO>> =
+        KIO.comprehension {
+            NotificationMeasurementRuleRepo.fetchAllByLocationId(locationId).orDie().onNullFail { Error.NotFound }
+        }
+
+    fun getAllNotificationMeasurementRulesFromUser(userId: Long): App<Error, List<NotificationMeasurementRuleDTO>> =
+        KIO.comprehension {
+            NotificationMeasurementRuleRepo.fetchAllByUserId(userId).orDie().onNullFail { Error.NotFound }
+        }
+
+    fun getAllNotificationMeasurementRuleByUserIdAndLocationId(
+        userId: Long,
+        locationId: Long
+    ): App<Error, List<NotificationMeasurementRuleDTO>> = KIO.comprehension {
+        NotificationMeasurementRuleRepo.fetchAllByUserIdAndLocationId(userId, locationId).orDie()
+            .onNullFail { Error.NotFound }
     }
 
-    fun getAllNotificationMeasurementRulesByLocationId(locationId: Long): App<NotificationMeasurementRuleService.Error, List<NotificationMeasurementRuleDTO>> = KIO.comprehension {
-        NotificationMeasurementRuleRepo.fetchAllByLocationId(locationId).orDie().onNullFail { Error.NotFound } as KIO<JEnv, Error, List<NotificationMeasurementRuleDTO>>
-    }
-
-    fun getAllNotificationMeasurementRulesFromUser(userId: Long): App<NotificationMeasurementRuleService.Error, List<NotificationMeasurementRuleDTO>> = KIO.comprehension {
-        NotificationMeasurementRuleRepo.fetchAllByUserId(userId).orDie().onNullFail { Error.NotFound } as KIO<JEnv, Error, List<NotificationMeasurementRuleDTO>>
-    }
-
-    fun getAllotificationMeasurementRuleByUserIdAndLocationId(userId: Long, locationId: Long) : App<NotificationMeasurementRuleService.Error, List<NotificationMeasurementRuleDTO>> = KIO.comprehension {
-        NotificationMeasurementRuleRepo.fetchAllByUserIdAndLocationId(userId, locationId).orDie().onNullFail { NotificationMeasurementRuleService.Error.NotFound } as KIO<JEnv, Error, List<NotificationMeasurementRuleDTO>>
-    }
-
-    fun getNotificationMeasurementRule(userId: Long, locationId: Long, measurementTypeId: Long) : App<NotificationMeasurementRuleService.Error, NotificationMeasurementRuleDTO> = KIO.comprehension {
-        NotificationMeasurementRuleRepo.fetchByIds(userId, locationId, measurementTypeId).orDie().onNullFail { NotificationMeasurementRuleService.Error.NotFound }.map { NotificationMeasurementRuleDTO.from(it) }
+    fun getNotificationMeasurementRule(
+        userId: Long,
+        locationId: Long,
+        measurementTypeId: Long
+    ): App<Error, NotificationMeasurementRuleDTO> = KIO.comprehension {
+        NotificationMeasurementRuleRepo.fetchByIds(userId, locationId, measurementTypeId).orDie()
+            .onNullFail { Error.NotFound }.map { NotificationMeasurementRuleDTO.from(it) }
     }
 
     fun createRule(
+        userId: Long,
         rule: CreateOrUpdateNotificationMeasurementRuleRequest
     ): App<Error, NotificationMeasurementRuleDTO> = KIO.comprehension {
-/*
-        val hasSub = !SubscriptionRepository.hasActiveSubscription(rule.userId, SubscriptionType.APP_NOTIFICATION).orDie()
-        !KIO.failOn(!hasSub) { Error.SubscriptionRequired }
-*/
-
-        val rule = !NotificationMeasurementRuleRepo.insert(
+        /*
+            val hasSub = !SubscriptionRepository.hasActiveSubscription(rule.userId, SubscriptionType.APP_NOTIFICATION).orDie()
+            !KIO.failOn(!hasSub) { Error.SubscriptionRequired }
+        */
+        NotificationMeasurementRuleRepo.insert(
             NotificationMeasurementRule(
-                userId = rule.userId,
+                userId = userId,
                 locationId = rule.locationId,
                 measurementTypeId = rule.measurementTypeId,
                 operator = rule.operator,
                 measurementValue = rule.measurementValue,
                 isActive = rule.isActive
             )
-        ).orDie()
-        NotificationMeasurementRuleRepo.fetchById(rule.id!!).orDie().onNullFail { NotificationMeasurementRuleService.Error.NotFound }.map { NotificationMeasurementRuleDTO.from(it) }
+        ).orDie().map { NotificationMeasurementRuleDTO.from(it) }
     }
 
     fun updateRule(
+        userId: Long,
         id: Long,
         rule: CreateOrUpdateNotificationMeasurementRuleRequest
-    ): App<NotificationMeasurementRuleService.Error, NotificationMeasurementRuleDTO> = KIO.comprehension {
-        !NotificationMeasurementRuleRepo.update(
+    ): App<Error, NotificationMeasurementRuleDTO> = KIO.comprehension {
+        NotificationMeasurementRuleRepo.update(
             id,
             NotificationMeasurementRule(
-                userId = rule.userId,
+                userId = userId,
                 locationId = rule.locationId,
                 measurementTypeId = rule.measurementTypeId,
                 operator = rule.operator,
@@ -86,12 +98,10 @@ object NotificationMeasurementRuleService {
                 isActive = rule.isActive,
                 lastState = false
             )
-        ).orDie()
-        NotificationMeasurementRuleRepo.fetchById(id).orDie().onNullFail { NotificationMeasurementRuleService.Error.NotFound }.map { NotificationMeasurementRuleDTO.from(it) }
+        ).orDie().onNullFail { Error.NotFound }.map { NotificationMeasurementRuleDTO.from(it) }
     }
 
-    fun deleteRule(ruleId: Long): App<UserService.Error, Unit> = KIO.comprehension {
-        val rule = !NotificationMeasurementRuleRepo.fetchById(ruleId).orDie()
-        NotificationMeasurementRuleRepo.deleteById(rule?.id!!).orDie()
+    fun deleteRule(userId: Long, ruleId: Long): App<UserService.Error, Unit> = KIO.comprehension {
+        NotificationMeasurementRuleRepo.deleteById(userId, ruleId).orDie()
     }
 }

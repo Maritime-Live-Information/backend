@@ -2,6 +2,7 @@ import de.lambda9.tailwind.jooq.JIO
 import de.lambda9.tailwind.jooq.Jooq
 import hs.flensburg.marlin.business.ApiError
 import hs.flensburg.marlin.business.ServiceLayerError
+import hs.flensburg.marlin.business.api.userLocations.entity.UserLocationDTO
 import hs.flensburg.marlin.database.generated.tables.pojos.UserLocations
 import hs.flensburg.marlin.database.generated.tables.references.USER_LOCATIONS
 
@@ -40,13 +41,13 @@ object UserLocationsRepo {
             .fetchOneInto(UserLocations::class.java)
     }
 
-    fun fetchById(id: Long): JIO<UserLocations?> = Jooq.query {
+    fun fetchById(userId: Long, id: Long): JIO<UserLocations?> = Jooq.query {
         selectFrom(USER_LOCATIONS)
-            .where(USER_LOCATIONS.ID.eq(id))
+            .where(USER_LOCATIONS.ID.eq(id).and(USER_LOCATIONS.USER_ID.eq(userId)))
             .fetchOneInto(UserLocations::class.java)
     }
 
-    fun fetchAllByUserId(userId: Long): JIO<List<UserLocationDTO?>> = Jooq.query {
+    fun fetchAllByUserId(userId: Long): JIO<List<UserLocationDTO>> = Jooq.query {
         selectFrom(USER_LOCATIONS)
             .where(USER_LOCATIONS.USER_ID.eq(userId))
             .fetchInto(UserLocations::class.java)
@@ -65,9 +66,9 @@ object UserLocationsRepo {
             .fetchInto(UserLocations::class.java)
     }
 
-    fun deleteById(id: Long): JIO<Unit> = Jooq.query {
+    fun deleteById(userId: Long, id: Long): JIO<Unit> = Jooq.query {
         deleteFrom(USER_LOCATIONS)
-            .where(USER_LOCATIONS.ID.eq(id))
+            .where(USER_LOCATIONS.ID.eq(id).and(USER_LOCATIONS.USER_ID.eq(userId)))
             .execute()
     }
 }

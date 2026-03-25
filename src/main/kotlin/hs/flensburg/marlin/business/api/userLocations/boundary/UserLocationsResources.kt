@@ -1,158 +1,58 @@
+package hs.flensburg.marlin.business.api.userLocations.boundary
+
+import hs.flensburg.marlin.business.api.auth.entity.LoggedInUser
+import hs.flensburg.marlin.business.api.openAPI.UserLocationsOpenAPISpec
 import hs.flensburg.marlin.business.api.userLocations.entity.CreateOrUpdateUserLocationRequest
+import hs.flensburg.marlin.plugins.Realm
+import hs.flensburg.marlin.plugins.authenticate
 import hs.flensburg.marlin.plugins.respondKIO
 import io.github.smiley4.ktoropenapi.delete
 import io.github.smiley4.ktoropenapi.get
 import io.github.smiley4.ktoropenapi.post
 import io.github.smiley4.ktoropenapi.put
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
 import io.ktor.server.routing.routing
-import kotlin.text.toLong
 
 fun Application.configureUserLocations() {
     routing {
-        get(
-            path = "/user-locations/{id}",
-            builder = {
-                description = "Get a user location by its ID "
-                tags("user-locations")
-                request {
-                    pathParameter<Long>("id") {
-                        description = "ID of the user location"
-                    }
-                }
-                response {
-                    HttpStatusCode.OK to {
-                        body<UserLocationDTO>()
-                    }
-                    HttpStatusCode.NotFound to {
-                        body<String>()
-                    }
-                }
+        authenticate(Realm.COMMON) {
+            get("/user-locations/{id}", UserLocationsOpenAPISpec.getUserLocation) {
+                val user = call.principal<LoggedInUser>()!!
+                val id = call.parameters["id"]!!.toLong()
+                call.respondKIO(UserLocationsService.getUserLocation(user.id, id))
             }
-        ) {
-            val id = call.parameters["id"]!!.toLong()
-            call.respondKIO(UserLocationsService.getUserLocation(id))
-        }
 
-        get(
-            path = "/user-locations/{userId}/{locationId}",
-            builder = {
-                description = "Get a user location by its user ID and location ID"
-                tags("user-locations")
-                request {
-                    pathParameter<Long>("userId") {
-                        description = "ID of the user"
-                    }
-                    pathParameter<Long>("locationId") {
-                        description = "ID of the location"
-                    }
-                }
-                response {
-                    HttpStatusCode.OK to {
-                        body<UserLocationDTO>()
-                    }
-                    HttpStatusCode.NotFound to {
-                        body<String>()
-                    }
-                }
+            get("/user-locations/location/{locationId}", UserLocationsOpenAPISpec.getUserLocationByUserIdAndLocationId) {
+                val user = call.principal<LoggedInUser>()!!
+                val locationId = call.parameters["locationId"]!!.toLong()
+                call.respondKIO(UserLocationsService.getUserLocationByUserIdAndLocationId(user.id, locationId))
             }
-        ) {
-            val userId = call.parameters["userId"]!!.toLong()
-            val locationId = call.parameters["locationId"]!!.toLong()
-            call.respondKIO(UserLocationsService.getUserLocationByUserIdAndLocationId(userId, locationId))
-        }
 
-        get(
-            path = "/user-locations/user/{userId}",
-            builder = {
-                description = "Get all user locations from a user by the user ID"
-                tags("user-locations")
-                request {
-                    pathParameter<Long>("userId") {
-                        description = "ID of the user"
-                    }
-                }
-                response {
-                    HttpStatusCode.OK to {
-                        body<UserLocationDTO>()
-                    }
-                    HttpStatusCode.NotFound to {
-                        body<String>()
-                    }
-                }
+            get("/user-locations/user", UserLocationsOpenAPISpec.getAllUserLocationsFromUser) {
+                val user = call.principal<LoggedInUser>()!!
+                call.respondKIO(UserLocationsService.getAllUserLocationsFromUser(user.id))
             }
-        ) {
-            val userId = call.parameters["userId"]!!.toLong()
-            call.respondKIO(UserLocationsService.getAllUserLocationsFromUser(userId))
-        }
 
-        post(
-            path = "/user-locations",
-            builder = {
-                description = "Create a user location"
-                tags("user-locations")
-                request {
-                    body<CreateOrUpdateUserLocationRequest>()
-                }
-                response {
-                    HttpStatusCode.Created to {
-                        body<UserLocationDTO>()
-                    }
-                    HttpStatusCode.BadRequest to {
-                        body<String>()
-                    }
-                }
+            post("/user-locations", UserLocationsOpenAPISpec.createUserLocation) {
+                val user = call.principal<LoggedInUser>()!!
+                val request = call.receive<CreateOrUpdateUserLocationRequest>()
+                call.respondKIO(UserLocationsService.create(user.id, request))
             }
-        ) {
-            val request = call.receive<CreateOrUpdateUserLocationRequest>()
-            call.respondKIO(UserLocationsService.create(request))
-        }
 
-        put(
-            path = "/user-locations/{id}",
-            builder = {
-                description = "Update a user location by its ID"
-                tags("user-locations")
-                request {
-                    body<CreateOrUpdateUserLocationRequest>()
-                }
-                response {
-                    HttpStatusCode.OK to {
-                        body<UserLocationDTO>()
-                    }
-                    HttpStatusCode.NotFound to {
-                        body<String>()
-                    }
-                }
+            put("/user-locations/{id}", UserLocationsOpenAPISpec.updateUserLocation) {
+                val user = call.principal<LoggedInUser>()!!
+                val id = call.parameters["id"]!!.toLong()
+                val request = call.receive<CreateOrUpdateUserLocationRequest>()
+                call.respondKIO(UserLocationsService.update(user.id, id, request))
             }
-        ) {
-            val id = call.parameters["id"]!!.toLong()
-            val request = call.receive<CreateOrUpdateUserLocationRequest>()
-            call.respondKIO(UserLocationsService.update(id, request))
-        }
 
-        delete(
-            path = "/user-locations/{id}",
-            builder = {
-                description = "Delete a user location by ID."
-                tags("user-locations")
-                request {
-                    pathParameter<Long>("id") {
-                        description = "ID of the user location"
-                    }
-                }
-                response {
-                    HttpStatusCode.NoContent to {}
-                    HttpStatusCode.NotFound to {
-                        body<String>()
-                    }
-                }
+            delete("/user-locations/{id}", UserLocationsOpenAPISpec.deleteUserLocation) {
+                val user = call.principal<LoggedInUser>()!!
+                val id = call.parameters["id"]!!.toLong()
+                call.respondKIO(UserLocationsService.delete(user.id, id))
             }
-        ) {
-            val id = call.parameters["id"]!!.toLong()
-            call.respondKIO(UserLocationsService.delete(id))
         }
     }
 }

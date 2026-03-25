@@ -1,193 +1,97 @@
 package hs.flensburg.marlin.business.api.notificationMeasurementRule.boundary
 
+import hs.flensburg.marlin.business.api.auth.entity.LoggedInUser
 import hs.flensburg.marlin.business.api.notificationMeasurementRule.entity.CreateOrUpdateNotificationMeasurementRuleRequest
-import hs.flensburg.marlin.business.api.notificationMeasurementRule.entity.NotificationMeasurementRuleDTO
+import hs.flensburg.marlin.business.api.openAPI.NotificationMeasurementRuleOpenAPISpec
+import hs.flensburg.marlin.plugins.Realm
+import hs.flensburg.marlin.plugins.authenticate
 import hs.flensburg.marlin.plugins.respondKIO
 import io.github.smiley4.ktoropenapi.delete
 import io.github.smiley4.ktoropenapi.get
 import io.github.smiley4.ktoropenapi.post
 import io.github.smiley4.ktoropenapi.put
-import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.auth.principal
 import io.ktor.server.request.receive
 import io.ktor.server.routing.routing
-import kotlin.text.toLong
 
 fun Application.configureNotificationMeasurementRules() {
     routing {
-        get(
-            path = "/notification-measurement-rules/{id}",
-            builder = {
-                description = "Get a notification measurement rule by its ID "
-                tags("notification-measurement-rules")
-                request {
-                    pathParameter<Long>("id") {
-                        description = "ID of the notification measurement rule"
-                    }
-                }
-                response {
-                    HttpStatusCode.OK to {
-                        body<NotificationMeasurementRuleDTO>()
-                    }
-                    HttpStatusCode.NotFound to {
-                        body<String>()
-                    }
-                }
+        authenticate(Realm.COMMON) {
+            get(
+                "/notification-measurement-rules/{id}",
+                NotificationMeasurementRuleOpenAPISpec.getNotificationMeasurementRule
+            ) {
+                val user = call.principal<LoggedInUser>()!!
+                val id = call.parameters["id"]!!.toLong()
+                call.respondKIO(NotificationMeasurementRuleService.getNotificationMeasurementRule(userId = user.id, ruleId = id))
             }
-        ) {
-            val id = call.parameters["id"]!!.toLong()
-            call.respondKIO(NotificationMeasurementRuleService.getNotificationMeasurementRule(id))
-        }
 
-        get(
-            path = "/notification-measurement-rules/user/{userId}",
-            builder = {
-                description = "Get all notification measurement rules from a user by the user ID"
-                tags("notification-measurement-rules")
-                request {
-                    pathParameter<Long>("userId") {
-                        description = "ID of the user"
-                    }
-                }
-                response {
-                    HttpStatusCode.OK to {
-                        body<NotificationMeasurementRuleDTO>()
-                    }
-                    HttpStatusCode.NotFound to {
-                        body<String>()
-                    }
-                }
+            get(
+                "/notification-measurement-rules/user",
+                NotificationMeasurementRuleOpenAPISpec.getAllNotificationMeasurementRulesFromUser
+            ) {
+                val user = call.principal<LoggedInUser>()!!
+                call.respondKIO(NotificationMeasurementRuleService.getAllNotificationMeasurementRulesFromUser(user.id))
             }
-        ) {
-            val userId = call.parameters["userId"]!!.toLong()
-            call.respondKIO(NotificationMeasurementRuleService.getAllNotificationMeasurementRulesFromUser(userId))
-        }
 
-        get(
-            path = "/notification-measurement-rules/user/{userId}/location/{locationId}",
-            builder = {
-                description = "Get all notification measurement rules from a user by the user ID and Location ID"
-                tags("notification-measurement-rules")
-                request {
-                    pathParameter<Long>("userId") {
-                        description = "ID of the user"
-                    }
-                    pathParameter<Long>("locationId") {
-                        description = "ID of the location"
-                    }
-                }
-                response {
-                    HttpStatusCode.OK to {
-                        body<NotificationMeasurementRuleDTO>()
-                    }
-                    HttpStatusCode.NotFound to {
-                        body<String>()
-                    }
-                }
+            get(
+                "/notification-measurement-rules/user/location/{locationId}",
+                NotificationMeasurementRuleOpenAPISpec.getAllNotificationMeasurementRulesByUserIdAndLocationId
+            ) {
+                val user = call.principal<LoggedInUser>()!!
+                val locationId = call.parameters["locationId"]!!.toLong()
+                call.respondKIO(
+                    NotificationMeasurementRuleService.getAllNotificationMeasurementRuleByUserIdAndLocationId(
+                        user.id,
+                        locationId
+                    )
+                )
             }
-        ) {
-            val userId = call.parameters["userId"]!!.toLong()
-            val locationId = call.parameters["locationId"]!!.toLong()
-            call.respondKIO(NotificationMeasurementRuleService.getAllotificationMeasurementRuleByUserIdAndLocationId(userId, locationId))
-        }
 
-        get(
-            path = "/notification-measurement-rules/user/{userId}/location/{locationId}/measurementTypeId/{measurementTypeId}",
-            builder = {
-                description = "Get all notification measurement rules from a user by the user ID"
-                tags("notification-measurement-rules")
-                request {
-                    pathParameter<Long>("userId") {
-                        description = "ID of the user"
-                    }
-                    pathParameter<Long>("locationId") {
-                        description = "ID of the location"
-                    }
-                    pathParameter<Long>("measurementTypeId") {
-                        description = "ID of the measurement_type"
-                    }
-                }
-                response {
-                    HttpStatusCode.OK to {
-                        body<NotificationMeasurementRuleDTO>()
-                    }
-                    HttpStatusCode.NotFound to {
-                        body<String>()
-                    }
-                }
+            get(
+                "/notification-measurement-rules/user/location/{locationId}/measurementTypeId/{measurementTypeId}",
+                NotificationMeasurementRuleOpenAPISpec.getNotificationMeasurementRuleByUserLocationAndType
+            ) {
+                val user = call.principal<LoggedInUser>()!!
+                val locationId = call.parameters["locationId"]!!.toLong()
+                val measurementTypeId = call.parameters["measurementTypeId"]!!.toLong()
+                call.respondKIO(
+                    NotificationMeasurementRuleService.getNotificationMeasurementRule(
+                        user.id,
+                        locationId,
+                        measurementTypeId
+                    )
+                )
             }
-        ) {
-            val userId = call.parameters["userId"]!!.toLong()
-            val locationId = call.parameters["locationId"]!!.toLong()
-            val measurementTypeId = call.parameters["measurementTypeId"]!!.toLong()
-            call.respondKIO(NotificationMeasurementRuleService.getNotificationMeasurementRule(userId, locationId, measurementTypeId))
-        }
 
-        post(
-            path = "/notification-measurement-rules",
-            builder = {
-                description = "Create a notification measurement rule"
-                tags("notification-measurement-rules")
-                request {
-                    body<CreateOrUpdateNotificationMeasurementRuleRequest>()
-                }
-                response {
-                    HttpStatusCode.Created to {
-                        body<NotificationMeasurementRuleDTO>()
-                    }
-                    HttpStatusCode.BadRequest to {
-                        body<String>()
-                    }
-                }
+            post(
+                "/notification-measurement-rules",
+                NotificationMeasurementRuleOpenAPISpec.createNotificationMeasurementRule
+            ) {
+                val user = call.principal<LoggedInUser>()!!
+                val request = call.receive<CreateOrUpdateNotificationMeasurementRuleRequest>()
+                call.respondKIO(NotificationMeasurementRuleService.createRule(user.id, request))
             }
-        ) {
-            val request = call.receive<CreateOrUpdateNotificationMeasurementRuleRequest>()
-            call.respondKIO(NotificationMeasurementRuleService.createRule(request))
-        }
 
-        put(
-            path = "/notification-measurement-rules/{id}",
-            builder = {
-                description = "Update a notification measurement rule by its ID"
-                tags("notification-measurement-rules")
-                request {
-                    body<CreateOrUpdateNotificationMeasurementRuleRequest>()
-                }
-                response {
-                    HttpStatusCode.OK to {
-                        body<NotificationMeasurementRuleDTO>()
-                    }
-                    HttpStatusCode.NotFound to {
-                        body<String>()
-                    }
-                }
+            put(
+                "/notification-measurement-rules/{id}",
+                NotificationMeasurementRuleOpenAPISpec.updateNotificationMeasurementRule
+            ) {
+                val user = call.principal<LoggedInUser>()!!
+                val id = call.parameters["id"]!!.toLong()
+                val request = call.receive<CreateOrUpdateNotificationMeasurementRuleRequest>()
+                call.respondKIO(NotificationMeasurementRuleService.updateRule(user.id, id, request))
             }
-        ) {
-            val id = call.parameters["id"]!!.toLong()
-            val request = call.receive<CreateOrUpdateNotificationMeasurementRuleRequest>()
-            call.respondKIO(NotificationMeasurementRuleService.updateRule(id, request))
-        }
 
-        delete(
-            path = "/notification-measurement-rules/{id}",
-            builder = {
-                description = "Delete a notification measurement rule by ID."
-                tags("notification-measurement-rules")
-                request {
-                    pathParameter<Long>("id") {
-                        description = "ID of the user device entry"
-                    }
-                }
-                response {
-                    HttpStatusCode.NoContent to {}
-                    HttpStatusCode.NotFound to {
-                        body<String>()
-                    }
-                }
+            delete(
+                "/notification-measurement-rules/{id}",
+                NotificationMeasurementRuleOpenAPISpec.deleteNotificationMeasurementRule
+            ) {
+                val user = call.principal<LoggedInUser>()!!
+                val id = call.parameters["id"]!!.toLong()
+                call.respondKIO(NotificationMeasurementRuleService.deleteRule(user.id, id))
             }
-        ) {
-            val id = call.parameters["id"]!!.toLong()
-            call.respondKIO(NotificationMeasurementRuleService.deleteRule(id))
         }
     }
 }
