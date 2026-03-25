@@ -155,3 +155,4 @@ fun Application.configureSensors() {
             }
         }
     }
+}
