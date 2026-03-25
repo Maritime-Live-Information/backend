@@ -9,7 +9,7 @@ object NotificationMeasurementRuleOpenAPISpec {
 
     val getNotificationMeasurementRule: RouteConfig.() -> Unit = {
         tags("notification-measurement-rules")
-        description = "Get a notification measurement rule by its ID."
+        description = "Get a notification measurement rule by its ID for the authenticated user."
         request {
             pathParameter<Long>("id") {
                 description = "ID of the notification measurement rule"
@@ -27,12 +27,7 @@ object NotificationMeasurementRuleOpenAPISpec {
 
     val getAllNotificationMeasurementRulesFromUser: RouteConfig.() -> Unit = {
         tags("notification-measurement-rules")
-        description = "Get all notification measurement rules from a user by the user ID."
-        request {
-            pathParameter<Long>("userId") {
-                description = "ID of the user"
-            }
-        }
+        description = "Get all notification measurement rules for the authenticated user."
         response {
             HttpStatusCode.OK to {
                 body<List<NotificationMeasurementRuleDTO>>()
@@ -45,11 +40,8 @@ object NotificationMeasurementRuleOpenAPISpec {
 
     val getAllNotificationMeasurementRulesByUserIdAndLocationId: RouteConfig.() -> Unit = {
         tags("notification-measurement-rules")
-        description = "Get all notification measurement rules from a user by the user ID and location ID."
+        description = "Get all notification measurement rules for the authenticated user by location ID."
         request {
-            pathParameter<Long>("userId") {
-                description = "ID of the user"
-            }
             pathParameter<Long>("locationId") {
                 description = "ID of the location"
             }
@@ -66,11 +58,8 @@ object NotificationMeasurementRuleOpenAPISpec {
 
     val getNotificationMeasurementRuleByUserLocationAndType: RouteConfig.() -> Unit = {
         tags("notification-measurement-rules")
-        description = "Get a notification measurement rule by user ID, location ID, and measurement type ID."
+        description = "Get a notification measurement rule for the authenticated user by location ID and measurement type ID."
         request {
-            pathParameter<Long>("userId") {
-                description = "ID of the user"
-            }
             pathParameter<Long>("locationId") {
                 description = "ID of the location"
             }

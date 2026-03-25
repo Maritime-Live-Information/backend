@@ -23,48 +23,53 @@ object UserLocationsService {
         }
     }
 
-    fun getUserLocation(id: Long): App<UserLocationsService.Error, UserLocationDTO> = KIO.comprehension {
-        UserLocationsRepo.fetchById(id).orDie().onNullFail { UserLocationsService.Error.NotFound }.map { UserLocationDTO.from(it) }
+    fun getUserLocation(userId: Long, id: Long): App<Error, UserLocationDTO> = KIO.comprehension {
+        UserLocationsRepo.fetchById(userId, id).orDie().onNullFail { Error.NotFound }.map { UserLocationDTO.from(it) }
     }
 
-    fun getAllUserLocationsFromUser(userId: Long): App<UserLocationsService.Error, List<UserLocationDTO>> = KIO.comprehension {
-        UserLocationsRepo.fetchAllByUserId(userId).orDie().onNullFail { UserLocationsService.Error.NotFound } as KIO<JEnv, UserLocationsService.Error, List<UserLocationDTO>>
-    }
+    fun getAllUserLocationsFromUser(userId: Long): App<Error, List<UserLocationDTO>> =
+        KIO.comprehension {
+            UserLocationsRepo.fetchAllByUserId(userId).orDie()
+                .onNullFail { Error.NotFound }
+        }
 
-    fun getUserLocationByUserIdAndLocationId(userId: Long, locationId: Long): App<UserLocationsService.Error, UserLocationDTO> = KIO.comprehension {
-        UserLocationsRepo.fetchByUserIdAndLocationId(userId, locationId).orDie().onNullFail { UserLocationsService.Error.NotFound }.map { UserLocationDTO.from(it) }
+    fun getUserLocationByUserIdAndLocationId(
+        userId: Long,
+        locationId: Long
+    ): App<Error, UserLocationDTO> = KIO.comprehension {
+        UserLocationsRepo.fetchByUserIdAndLocationId(userId, locationId).orDie()
+            .onNullFail { Error.NotFound }.map { UserLocationDTO.from(it) }
     }
 
     fun create(
+        userId: Long,
         userLocation: CreateOrUpdateUserLocationRequest
-    ): App<UserLocationsService.Error, UserLocationDTO> = KIO.comprehension {
-        val userLocation = !UserLocationsRepo.insert(
+    ): App<Error, UserLocationDTO> = KIO.comprehension {
+        UserLocationsRepo.insert(
             UserLocations(
-                userId = userLocation.userId,
+                userId = userId,
                 locationId = userLocation.locationId,
                 sentHarborNotifications = userLocation.sentHarborNotifications,
             )
-        ).orDie()
-        UserLocationsRepo.fetchById(userLocation.id!!).orDie().onNullFail { UserLocationsService.Error.NotFound }.map { UserLocationDTO.from(it) }
+        ).orDie().map { UserLocationDTO.from(it) }
     }
 
     fun update(
+        userId: Long,
         id: Long,
         userLocation: CreateOrUpdateUserLocationRequest
-    ): App<UserLocationsService.Error, UserLocationDTO> = KIO.comprehension {
-        !UserLocationsRepo.update(
+    ): App<Error, UserLocationDTO?> = KIO.comprehension {
+        UserLocationsRepo.update(
             id,
             UserLocations(
-                userId = userLocation.userId,
+                userId = userId,
                 locationId = userLocation.locationId,
                 sentHarborNotifications = userLocation.sentHarborNotifications,
             )
-        ).orDie()
-        UserLocationsRepo.fetchById(id).orDie().onNullFail { UserLocationsService.Error.NotFound }.map { UserLocationDTO.from(it) }
+        ).orDie().onNullFail { Error.NotFound }.map { UserLocationDTO.from(it) }
     }
 
-    fun delete(id: Long): App<UserService.Error, Unit> = KIO.comprehension {
-        val userLocation = !UserLocationsRepo.fetchById(id).orDie()
-        UserLocationsRepo.deleteById(userLocation?.id!!).orDie()
+    fun delete(userId: Long, id: Long): App<UserService.Error, Unit> = KIO.comprehension {
+        UserLocationsRepo.deleteById(userId, id).orDie()
     }
 }

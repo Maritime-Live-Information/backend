@@ -9,12 +9,7 @@ object UserDeviceOpenAPISpec {
 
     val getUserDevice: RouteConfig.() -> Unit = {
         tags("user-device")
-        description = "Get a user device by its ID."
-        request {
-            pathParameter<Long>("id") {
-                description = "ID of the user device"
-            }
-        }
+        description = "Get the device for the authenticated user."
         response {
             HttpStatusCode.OK to {
                 body<UserDevice>()
@@ -27,12 +22,7 @@ object UserDeviceOpenAPISpec {
 
     val getAllUserDevices: RouteConfig.() -> Unit = {
         tags("user-device")
-        description = "Get all devices of a user by userId."
-        request {
-            pathParameter<Long>("userId") {
-                description = "userId of the user"
-            }
-        }
+        description = "Get all devices for the authenticated user."
         response {
             HttpStatusCode.OK to {
                 body<List<UserDevice>>()

@@ -27,11 +27,8 @@ object UserLocationsOpenAPISpec {
 
     val getUserLocationByUserIdAndLocationId: RouteConfig.() -> Unit = {
         tags("user-locations")
-        description = "Get a user location by its user ID and location ID."
+        description = "Get a user location for the authenticated user by location ID."
         request {
-            pathParameter<Long>("userId") {
-                description = "ID of the user"
-            }
             pathParameter<Long>("locationId") {
                 description = "ID of the location"
             }
@@ -48,12 +45,7 @@ object UserLocationsOpenAPISpec {
 
     val getAllUserLocationsFromUser: RouteConfig.() -> Unit = {
         tags("user-locations")
-        description = "Get all user locations from a user by the user ID."
-        request {
-            pathParameter<Long>("userId") {
-                description = "ID of the user"
-            }
-        }
+        description = "Get all user locations for the authenticated user."
         response {
             HttpStatusCode.OK to {
                 body<List<UserLocationDTO>>()

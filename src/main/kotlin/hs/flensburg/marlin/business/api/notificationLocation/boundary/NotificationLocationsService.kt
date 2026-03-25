@@ -1,10 +1,12 @@
+package hs.flensburg.marlin.business.api.notificationLocation.boundary
+
 import de.lambda9.tailwind.core.KIO
 import de.lambda9.tailwind.core.extensions.kio.onNullFail
 import de.lambda9.tailwind.core.extensions.kio.orDie
 import hs.flensburg.marlin.business.ApiError
 import hs.flensburg.marlin.business.App
-import hs.flensburg.marlin.business.JEnv
 import hs.flensburg.marlin.business.ServiceLayerError
+import hs.flensburg.marlin.business.api.notificationLocation.control.NotificationLocationsRepo
 import hs.flensburg.marlin.business.api.notificationLocation.entity.CreateOrUpdateNotificationLocationRequest
 import hs.flensburg.marlin.business.api.notificationLocation.entity.NotificationLocationDTO
 import hs.flensburg.marlin.database.generated.tables.pojos.NotificationLocations
@@ -27,7 +29,7 @@ object NotificationLocationsService {
     }
 
     fun getAllNotificationLocationsFromLocation(locationId: Long): App<Error, List<NotificationLocationDTO>> = KIO.comprehension {
-        NotificationLocationsRepo.fetchAllByLocationId(locationId).orDie().onNullFail { Error.NotFound } as KIO<JEnv, Error, List<NotificationLocationDTO>>
+        NotificationLocationsRepo.fetchAllByLocationId(locationId).orDie().onNullFail { Error.NotFound }
     }
 
     fun create(
@@ -44,7 +46,7 @@ object NotificationLocationsService {
         NotificationLocationsRepo.fetchById(notificationLocation.id!!).orDie().onNullFail { Error.NotFound }.map { NotificationLocationDTO.from(it) }
     }
 
-    fun delete(id: Long): App<NotificationLocationsService.Error, Unit> = KIO.comprehension {
+    fun delete(id: Long): App<Error, Unit> = KIO.comprehension {
         val notificationLocation = !NotificationLocationsRepo.fetchById(id).orDie()
         NotificationLocationsRepo.deleteById(notificationLocation?.id!!).orDie()
     }

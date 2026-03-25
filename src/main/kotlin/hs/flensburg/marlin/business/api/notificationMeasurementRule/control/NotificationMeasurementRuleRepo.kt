@@ -22,17 +22,18 @@ object NotificationMeasurementRuleRepo {
         }
     }
 
-    fun insert(notificationMeasurementRule: NotificationMeasurementRule): JIO<NotificationMeasurementRule> = Jooq.query {
-        insertInto(NOTIFICATION_MEASUREMENT_RULE)
-            .set(NOTIFICATION_MEASUREMENT_RULE.USER_ID, notificationMeasurementRule.userId)
-            .set(NOTIFICATION_MEASUREMENT_RULE.LOCATION_ID, notificationMeasurementRule.locationId)
-            .set(NOTIFICATION_MEASUREMENT_RULE.MEASUREMENT_TYPE_ID, notificationMeasurementRule.measurementTypeId)
-            .set(NOTIFICATION_MEASUREMENT_RULE.OPERATOR, notificationMeasurementRule.operator)
-            .set(NOTIFICATION_MEASUREMENT_RULE.MEASUREMENT_VALUE, notificationMeasurementRule.measurementValue)
-            .set(NOTIFICATION_MEASUREMENT_RULE.IS_ACTIVE, notificationMeasurementRule.isActive)
-            .returning()
-            .fetchInto(NotificationMeasurementRule::class.java).first()
-    }
+    fun insert(notificationMeasurementRule: NotificationMeasurementRule): JIO<NotificationMeasurementRule> =
+        Jooq.query {
+            insertInto(NOTIFICATION_MEASUREMENT_RULE)
+                .set(NOTIFICATION_MEASUREMENT_RULE.USER_ID, notificationMeasurementRule.userId)
+                .set(NOTIFICATION_MEASUREMENT_RULE.LOCATION_ID, notificationMeasurementRule.locationId)
+                .set(NOTIFICATION_MEASUREMENT_RULE.MEASUREMENT_TYPE_ID, notificationMeasurementRule.measurementTypeId)
+                .set(NOTIFICATION_MEASUREMENT_RULE.OPERATOR, notificationMeasurementRule.operator)
+                .set(NOTIFICATION_MEASUREMENT_RULE.MEASUREMENT_VALUE, notificationMeasurementRule.measurementValue)
+                .set(NOTIFICATION_MEASUREMENT_RULE.IS_ACTIVE, notificationMeasurementRule.isActive)
+                .returning()
+                .fetchInto(NotificationMeasurementRule::class.java).first()
+        }
 
     fun update(
         id: Long,
@@ -47,7 +48,10 @@ object NotificationMeasurementRuleRepo {
             .set(NOTIFICATION_MEASUREMENT_RULE.IS_ACTIVE, notificationMeasurementRule.isActive)
             .set(NOTIFICATION_MEASUREMENT_RULE.LAST_STATE, notificationMeasurementRule.lastState)
             .set(NOTIFICATION_MEASUREMENT_RULE.LAST_NOTIFIED_AT, notificationMeasurementRule.lastNotifiedAt)
-            .where(NOTIFICATION_MEASUREMENT_RULE.ID.eq(id))
+            .where(
+                NOTIFICATION_MEASUREMENT_RULE.ID.eq(id)
+                    .and(NOTIFICATION_MEASUREMENT_RULE.USER_ID.eq(notificationMeasurementRule.userId))
+            )
             .returning()
             .fetchOneInto(NotificationMeasurementRule::class.java)
     }
@@ -70,43 +74,54 @@ object NotificationMeasurementRuleRepo {
             .fetchOneInto(NotificationMeasurementRule::class.java)
     }
 
-    fun fetchById(id: Long): JIO<NotificationMeasurementRule?> = Jooq.query {
+    fun fetchById(userId: Long, id: Long): JIO<NotificationMeasurementRule?> = Jooq.query {
         selectFrom(NOTIFICATION_MEASUREMENT_RULE)
-            .where(NOTIFICATION_MEASUREMENT_RULE.ID.eq(id))
+            .where(
+                NOTIFICATION_MEASUREMENT_RULE.ID.eq(id)
+                    .and(NOTIFICATION_MEASUREMENT_RULE.USER_ID.eq(userId))
+            )
             .fetchOneInto(NotificationMeasurementRule::class.java)
     }
 
-    fun fetchByIds(userId: Long, locationId: Long, measurementTypeId: Long): JIO<NotificationMeasurementRule?> = Jooq.query {
-        selectFrom(NOTIFICATION_MEASUREMENT_RULE)
-            .where(NOTIFICATION_MEASUREMENT_RULE.USER_ID.eq(userId), NOTIFICATION_MEASUREMENT_RULE.LOCATION_ID.eq(locationId), NOTIFICATION_MEASUREMENT_RULE.MEASUREMENT_TYPE_ID.eq(measurementTypeId))
-            .fetchOneInto(NotificationMeasurementRule::class.java)
-    }
+    fun fetchByIds(userId: Long, locationId: Long, measurementTypeId: Long): JIO<NotificationMeasurementRule?> =
+        Jooq.query {
+            selectFrom(NOTIFICATION_MEASUREMENT_RULE)
+                .where(
+                    NOTIFICATION_MEASUREMENT_RULE.USER_ID.eq(userId),
+                    NOTIFICATION_MEASUREMENT_RULE.LOCATION_ID.eq(locationId),
+                    NOTIFICATION_MEASUREMENT_RULE.MEASUREMENT_TYPE_ID.eq(measurementTypeId)
+                )
+                .fetchOneInto(NotificationMeasurementRule::class.java)
+        }
 
-    fun fetchAllByUserIdAndLocationId(userId: Long, locationId: Long): JIO<List<NotificationMeasurementRuleDTO?>> = Jooq.query {
-        selectFrom(NOTIFICATION_MEASUREMENT_RULE)
-            .where(NOTIFICATION_MEASUREMENT_RULE.USER_ID.eq(userId), NOTIFICATION_MEASUREMENT_RULE.LOCATION_ID.eq(locationId))
-            .fetchInto(NotificationMeasurementRule::class.java)
-            .map { NotificationMeasurementRuleDTO.from(it) }
-    }
+    fun fetchAllByUserIdAndLocationId(userId: Long, locationId: Long): JIO<List<NotificationMeasurementRuleDTO>> =
+        Jooq.query {
+            selectFrom(NOTIFICATION_MEASUREMENT_RULE)
+                .where(
+                    NOTIFICATION_MEASUREMENT_RULE.USER_ID.eq(userId),
+                    NOTIFICATION_MEASUREMENT_RULE.LOCATION_ID.eq(locationId)
+                )
+                .fetchInto(NotificationMeasurementRule::class.java)
+                .map { NotificationMeasurementRuleDTO.from(it) }
+        }
 
-    fun fetchAllByUserId(userId: Long): JIO<List<NotificationMeasurementRuleDTO?>> = Jooq.query {
+    fun fetchAllByUserId(userId: Long): JIO<List<NotificationMeasurementRuleDTO>> = Jooq.query {
         selectFrom(NOTIFICATION_MEASUREMENT_RULE)
             .where(NOTIFICATION_MEASUREMENT_RULE.USER_ID.eq(userId))
             .fetchInto(NotificationMeasurementRule::class.java)
             .map { NotificationMeasurementRuleDTO.from(it) }
     }
 
-    fun fetchAllByLocationId(locationId: Long): JIO<List<NotificationMeasurementRuleDTO?>> = Jooq.query {
+    fun fetchAllByLocationId(locationId: Long): JIO<List<NotificationMeasurementRuleDTO>> = Jooq.query {
         selectFrom(NOTIFICATION_MEASUREMENT_RULE)
             .where(NOTIFICATION_MEASUREMENT_RULE.LOCATION_ID.eq(locationId))
             .fetchInto(NotificationMeasurementRule::class.java)
             .map { NotificationMeasurementRuleDTO.from(it) }
     }
 
-    fun deleteById(id: Long): JIO<Unit> = Jooq.query {
+    fun deleteById(userId: Long, id: Long): JIO<Unit> = Jooq.query {
         deleteFrom(NOTIFICATION_MEASUREMENT_RULE)
-            .where(NOTIFICATION_MEASUREMENT_RULE.ID.eq(id))
+            .where(NOTIFICATION_MEASUREMENT_RULE.ID.eq(id).and(NOTIFICATION_MEASUREMENT_RULE.USER_ID.eq(userId)))
             .execute()
     }
-
 }
