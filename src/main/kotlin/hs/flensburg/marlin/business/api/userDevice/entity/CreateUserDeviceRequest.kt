@@ -4,12 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class CreateUserDeviceRequest(
-    val fcmToken: String,
-    val userId: Long
+    val fcmToken: String
 ) {
-    /*
-    init {
-        require(roles.isNotEmpty()) { "At least one role must be specified" }
-    }
-    */
 }
