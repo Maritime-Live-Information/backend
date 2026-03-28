@@ -97,7 +97,7 @@ object EmailService {
     fun sendBlacklistNotificationEmail(userId: Long): App<Error, Unit> = KIO.comprehension {
         !checkNoConsecutiveEmails(userId, EmailType.TOO_MANY_FAILED_LOGIN_ATTEMPTS) { lastEmail ->
             lastEmail == null || lastEmail.sentAt != null && lastEmail.sentAt!!.isBefore(
-                LocalDateTime.now().minusDays(15)
+                LocalDateTime.now().minusMinutes(15)
             )
         }
 
