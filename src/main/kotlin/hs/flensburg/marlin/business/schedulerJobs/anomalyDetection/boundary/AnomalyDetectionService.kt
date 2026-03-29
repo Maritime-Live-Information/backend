@@ -22,7 +22,7 @@ object AnomalyDetectionService {
     const val TEMP_SENSOR_DEPTH_LOWER_BORDER: Double = -32.0
     const val TEMP_SENSOR_DEPTH_UPPER_BORDER: Double = 40.0
     const val WATER_LEVEL_SENSOR_HEIGHT: Double = 200.0
-    const val WATER_LEVEL_SENSOR_BLIND_ZONE: Double = 20.0
+    const val WATER_LEVEL_SENSOR_BLIND_ZONE: Double = 5.0
     const val WATER_LEVEL_SENSOR_MAX_MEASURING_DISTANCE: Double = 700.0
     const val WATER_LEVEL_SENSOR_UPPER_LIMIT: Double = WATER_LEVEL_SENSOR_HEIGHT - WATER_LEVEL_SENSOR_BLIND_ZONE
     const val WATER_LEVEL_SENSOR_LOWER_LIMIT: Double =
