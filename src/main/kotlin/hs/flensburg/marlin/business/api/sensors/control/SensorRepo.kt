@@ -88,7 +88,6 @@ object SensorRepo {
             .firstOrNull()
     }
 
-
     private fun <R : Record> ResultQuery<R>.fetchAndMapToListOfLocationWithLatestMeasurementsDTO(
         timezone: String,
         units: String

@@ -24,6 +24,17 @@ DECLARE
 BEGIN
     -- Choose correct view based on time range
     CASE lower(p_time_range)
+        WHEN '3h' THEN sql := '
+                SELECT sensor_id, type_id, location_id, time AS bucket,
+                       value AS avg, value AS min, value AS max,
+                       1::bigint AS count,
+                       NULL::double precision AS stddev
+                FROM marlin.measurement
+                WHERE time >= NOW() - INTERVAL ''3 hours''
+                  AND location_id = $1
+                  AND ($2 IS NULL OR sensor_id = $2)
+                  AND ($3 IS NULL OR type_id = $3)
+                ORDER BY time DESC';
         WHEN '24h' THEN sql := '
                 SELECT sensor_id, type_id, location_id, time AS bucket,
                        value AS avg, value AS min, value AS max, 

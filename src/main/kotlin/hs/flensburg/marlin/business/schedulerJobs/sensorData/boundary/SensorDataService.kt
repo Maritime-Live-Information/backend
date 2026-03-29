@@ -5,7 +5,9 @@ import de.lambda9.tailwind.core.extensions.kio.attempt
 import de.lambda9.tailwind.jooq.transact
 import hs.flensburg.marlin.business.App
 import hs.flensburg.marlin.business.JEnv
+import hs.flensburg.marlin.business.ServiceLayerError
 import hs.flensburg.marlin.business.httpclient
+import hs.flensburg.marlin.business.schedulerJobs.anomalyDetection.boundary.AnomalyDetectionService
 import hs.flensburg.marlin.business.schedulerJobs.potentialSensors.boundary.PotentialSensorService
 import hs.flensburg.marlin.business.schedulerJobs.sensorData.boundary.PreProcessingService.preProcessData
 import hs.flensburg.marlin.business.schedulerJobs.sensorData.control.SensorDataRepo
@@ -13,10 +15,9 @@ import hs.flensburg.marlin.business.schedulerJobs.sensorData.entity.ThingClean
 import hs.flensburg.marlin.business.schedulerJobs.sensorData.entity.ThingRaw
 import hs.flensburg.marlin.business.schedulerJobs.sensorData.entity.toClean
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.client.call.body
-import io.ktor.client.request.get
-import io.ktor.http.appendPathSegments
-import io.ktor.http.takeFrom
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import io.ktor.http.*
 import kotlinx.coroutines.runBlocking
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -25,14 +26,14 @@ private val logger = KotlinLogging.logger { }
 
 object SensorDataService {
 
-    fun getSensorDataFromActiveSensors(): App<PotentialSensorService.Error, Unit> = KIO.comprehension {
+    fun getSensorDataFromActiveSensors(): App<ServiceLayerError, Unit> = KIO.comprehension {
         val activeSensorIds = !PotentialSensorService.getActivePotentialSensorIds()
 
         getAndSaveAllSensorsData(activeSensorIds) { locationId ->
             // This block triggers if a new measurement is available for a location within the last hour
             KIO.comprehension {
                 logger.debug { "New measurements for Location $locationId -> Trigger" }
-
+                !AnomalyDetectionService.checkNewMeasurements(locationId)
                 // TODO: Call other services here, like anomaly detection and notification
 
                 KIO.unit
@@ -41,11 +42,8 @@ object SensorDataService {
     }
 
     fun fetchSensorDataFrostServer(baseUrl: String, id: Long): ThingRaw = runBlocking {
-        val expandValue = "Locations(\$select=location),Datastreams(" +
-                "\$select=name,description,unitOfMeasurement,phenomenonTime,resultTime;" +
-                "\$expand=Sensor(\$select=name,description,metadata)," +
-                "ObservedProperty(\$select=name,description)," +
-                "Observations(\$orderby=phenomenonTime+desc;\$top=1;\$select=phenomenonTime,result))"
+        val expandValue =
+            "Locations(\$select=location),Datastreams(" + "\$select=name,description,unitOfMeasurement,phenomenonTime,resultTime;" + "\$expand=Sensor(\$select=name,description,metadata)," + "ObservedProperty(\$select=name,description)," + "Observations(\$orderby=phenomenonTime+desc;\$top=1;\$select=phenomenonTime,result))"
 
         httpclient.get {
             url {
@@ -57,15 +55,13 @@ object SensorDataService {
     }
 
     fun getAndSaveAllSensorsData(
-        ids: List<Long>,
-        onNewData: (Long) -> App<PotentialSensorService.Error, Unit> = { KIO.unit }
+        ids: List<Long>, onNewData: (Long) -> App<PotentialSensorService.Error, Unit> = { KIO.unit }
     ): App<PotentialSensorService.Error, Unit> = KIO.comprehension {
         val frostServerBaseUrl = (!KIO.access<JEnv>()).env.config.dataSources.FrostServerPath
         ids.forEach { id ->
             // Fetch Frost Server
             // Response to clean
             val thingClean = fetchSensorDataFrostServer(frostServerBaseUrl, id).toClean()
-
             // Preprocess the data
             val thingProcessed = preProcessData(thingClean)
 
@@ -86,7 +82,6 @@ object SensorDataService {
 
                 if (result.timestamp.isAfter(oneHourAgo)) {
                     printStationInfo(id, result.locationId, thingClean)
-
                     (!onNewData(result.locationId).attempt()).fold(
                         onSuccess = { },
                         onError = { logger.error { it.toString() } })
@@ -109,15 +104,12 @@ object SensorDataService {
     }
 
     private fun formatTideMeasurement(thingClean: ThingClean): String {
-        val tideStream = thingClean.datastreams
-            .find { it.observedProperty.name == "Tide" }
+        val tideStream = thingClean.datastreams.find { it.observedProperty.name == "Tide" }
 
         return tideStream?.let {
             val measurement = it.measurements.firstOrNull()
             if (measurement != null) {
-                "Die aktuelle Tide beträgt ${measurement.result} ${it.unitOfMeasurement.symbol} " +
-                        "(${it.unitOfMeasurement.name}), " +
-                        "gemessen am ${measurement.timestamp}"
+                "Die aktuelle Tide beträgt ${measurement.result} ${it.unitOfMeasurement.symbol} " + "(${it.unitOfMeasurement.name}), " + "gemessen am ${measurement.timestamp}"
             } else {
                 "Keine Tide-Messung verfügbar"
             }
