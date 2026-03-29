@@ -33,9 +33,7 @@ object SensorDataService {
             // This block triggers if a new measurement is available for a location within the last hour
             KIO.comprehension {
                 logger.debug { "New measurements for Location $locationId -> Trigger" }
-                print("  Test7")
                 !AnomalyDetectionService.checkNewMeasurements(locationId)
-                print("  Test8")
                 // TODO: Call other services here, like anomaly detection and notification
 
                 KIO.unit
@@ -44,11 +42,8 @@ object SensorDataService {
     }
 
     fun fetchSensorDataFrostServer(baseUrl: String, id: Long): ThingRaw = runBlocking {
-        val expandValue = "Locations(\$select=location),Datastreams(" +
-                "\$select=name,description,unitOfMeasurement,phenomenonTime,resultTime;" +
-                "\$expand=Sensor(\$select=name,description,metadata)," +
-                "ObservedProperty(\$select=name,description)," +
-                "Observations(\$orderby=phenomenonTime+desc;\$top=1;\$select=phenomenonTime,result))"
+        val expandValue =
+            "Locations(\$select=location),Datastreams(" + "\$select=name,description,unitOfMeasurement,phenomenonTime,resultTime;" + "\$expand=Sensor(\$select=name,description,metadata)," + "ObservedProperty(\$select=name,description)," + "Observations(\$orderby=phenomenonTime+desc;\$top=1;\$select=phenomenonTime,result))"
 
         httpclient.get {
             url {
@@ -60,8 +55,7 @@ object SensorDataService {
     }
 
     fun getAndSaveAllSensorsData(
-        ids: List<Long>,
-        onNewData: (Long) -> App<PotentialSensorService.Error, Unit> = { KIO.unit }
+        ids: List<Long>, onNewData: (Long) -> App<PotentialSensorService.Error, Unit> = { KIO.unit }
     ): App<PotentialSensorService.Error, Unit> = KIO.comprehension {
         val frostServerBaseUrl = (!KIO.access<JEnv>()).env.config.dataSources.FrostServerPath
         ids.forEach { id ->
@@ -110,15 +104,12 @@ object SensorDataService {
     }
 
     private fun formatTideMeasurement(thingClean: ThingClean): String {
-        val tideStream = thingClean.datastreams
-            .find { it.observedProperty.name == "Tide" }
+        val tideStream = thingClean.datastreams.find { it.observedProperty.name == "Tide" }
 
         return tideStream?.let {
             val measurement = it.measurements.firstOrNull()
             if (measurement != null) {
-                "Die aktuelle Tide beträgt ${measurement.result} ${it.unitOfMeasurement.symbol} " +
-                        "(${it.unitOfMeasurement.name}), " +
-                        "gemessen am ${measurement.timestamp}"
+                "Die aktuelle Tide beträgt ${measurement.result} ${it.unitOfMeasurement.symbol} " + "(${it.unitOfMeasurement.name}), " + "gemessen am ${measurement.timestamp}"
             } else {
                 "Keine Tide-Messung verfügbar"
             }

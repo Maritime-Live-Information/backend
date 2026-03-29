@@ -1,6 +1,7 @@
 package hs.flensburg.marlin.business.api.sensors.entity
 
 enum class SensorMeasurementsTimeRange(val sqlExpression: String) {
+    LAST_3_HOURS("3h"),
     LAST_24_HOURS("24h"),
     LAST_48_HOURS("48h"),
     LAST_7_DAYS("7d"),

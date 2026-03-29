@@ -9,6 +9,7 @@ import hs.flensburg.marlin.business.ServiceLayerError
 import hs.flensburg.marlin.business.api.sensors.control.SensorRepo
 import hs.flensburg.marlin.business.api.sensors.entity.EnrichedMeasurementDTO
 import hs.flensburg.marlin.business.api.sensors.entity.LocationWithLatestMeasurementsDTO
+import hs.flensburg.marlin.business.api.sensors.entity.SensorMeasurementsTimeRange
 import hs.flensburg.marlin.business.api.sensors.entity.raw.MeasurementTypeDTO
 import hs.flensburg.marlin.business.schedulerJobs.anomalyDetection.control.AnomalyDetectionRepo.writeAnomaly
 import java.security.MessageDigest
@@ -47,7 +48,6 @@ object AnomalyDetectionService {
     val history = mutableListOf<String>()
 
     fun checkNewMeasurements(locationId: Long): App<ServiceLayerError, Unit> = KIO.comprehension {
-        print("Check gestartet\n")
         val latestMeasurements =
             !SensorRepo.fetchSingleLocationWithLatestMeasurements(locationId, "UTC", "metric").orDie()
                 .onNullFail { Error.NotFound }
@@ -56,9 +56,9 @@ object AnomalyDetectionService {
         val hash = getHash(currentMeasurement)
 
         if (hash !in history) {
-            val pastMeasurements =
-                !SensorRepo.fetchMeasurementsWithinCustomTimeRange(locationId, "3h", "UTC", "metric").orDie()
-                    .onNullFail { Error.NotFound }
+            val pastMeasurements = !SensorRepo.getLatestMeasurementTimeEnriched(
+                locationId, SensorMeasurementsTimeRange.LAST_3_HOURS, "UTC", "metric"
+            ).orDie().onNullFail { Error.NotFound }
 
             detectAnomaly(
                 currentMeasurement.latestMeasurements,
@@ -73,7 +73,6 @@ object AnomalyDetectionService {
     private fun detectAnomaly(
         measurement: List<EnrichedMeasurementDTO>, pastMeasurements: List<EnrichedMeasurementDTO>
     ) {
-        print("Check gestartet für ein Measurement")
         var anomalousWaterLevel = false
         var anomalousWaveHeight = false
 
@@ -92,20 +91,21 @@ object AnomalyDetectionService {
             anomalousWaterLevel =
                 currentWaterLevel.value !in WATER_LEVEL_SENSOR_LOWER_LIMIT..WATER_LEVEL_SENSOR_UPPER_LIMIT
             anomalousWaveHeight =
-                currentWaterLevel.value + currentWaveHeight.value !in 0.0..WATER_LEVEL_SENSOR_UPPER_LIMIT
+                currentWaterLevel.value + currentWaveHeight.value !in WATER_LEVEL_SENSOR_LOWER_LIMIT..WATER_LEVEL_SENSOR_UPPER_LIMIT
             if (!anomalousWaterTemp) anomalousWaterTemp =
                 currentWaterLevel.value !in TEMP_SENSOR_DEPTH_LOWER_BORDER..TEMP_SENSOR_DEPTH_UPPER_BORDER
 
             if (!anomalousWaterLevel) {
-                val absDiffFromMedianWaterLevel =
-                    abs(currentWaterLevel.value - calculateMedian(pastMeasurementsByType, MEASUREMENT_NAME_WATER_LEVEL))
-                anomalousWaterLevel = absDiffFromMedianWaterLevel >= MAX_WATER_LEVEL_FROM_MEDIAN
+                val median = calculateMedian(pastMeasurementsByType, MEASUREMENT_NAME_WATER_LEVEL)
+                if (median != -999.999) {
+                    val absDiffFromMedianWaterLevel = abs(currentWaterLevel.value - median)
+                    anomalousWaterLevel = absDiffFromMedianWaterLevel >= MAX_WATER_LEVEL_FROM_MEDIAN
+                }
+
             }
         }
 
         // TODO("ggf. Prüfung des Zusammenspiels mit anderen Sensoren")
-
-        print("Temp: $anomalousWaterTemp / ${currentWaterTemp?.value}, Level $anomalousWaterLevel / ${currentWaterLevel?.value}, Wave $anomalousWaveHeight / ${currentWaveHeight?.value}")
 
         currentWaterTemp.takeIf { anomalousWaterTemp }?.let(::writeAnomaly)
         currentWaterLevel.takeIf { anomalousWaterLevel }?.let(::writeAnomaly)
@@ -119,10 +119,13 @@ object AnomalyDetectionService {
         if (temperature.value !in MIN_WATER_TEMPERATURE..MAX_WATER_TEMPERATURE) {
             return true
         }
-        val absDiffFromMedianWaterTemperature =
-            abs(temperature.value - calculateMedian(pastMeasurementsByType, MEASUREMENT_NAME_TEMPERATURE))
-        if (absDiffFromMedianWaterTemperature >= MAX_TEMPERATURE_FROM_MEDIAN) {
-            return true
+        val median = calculateMedian(pastMeasurementsByType, MEASUREMENT_NAME_TEMPERATURE)
+
+        if (median != -999.999) {
+            val absDiffFromMedianWaterTemperature = abs(temperature.value - median)
+            if (absDiffFromMedianWaterTemperature >= MAX_TEMPERATURE_FROM_MEDIAN) {
+                return true
+            }
         }
         return false
     }
@@ -138,19 +141,21 @@ object AnomalyDetectionService {
     private fun calculateMedian(
         map: Map<MeasurementTypeDTO, List<EnrichedMeasurementDTO>>, measurementTypeName: String
     ): Double {
-        print("Median wird berechnet")
-        val key = map.keys.firstOrNull { it.name == measurementTypeName }!!
-        val list = map[key]
+        if (!map.isEmpty()) {
+            val key = map.keys.firstOrNull { it.name == measurementTypeName }!!
+            val list = map[key]
 
-        val sortedList = list!!.sortedBy { it.value }
+            val sortedList = list!!.sortedBy { it.value }
 
-        val size = sortedList.size
-        return if (size % 2 == 1) {
-            sortedList[size / 2].value
-        } else {
-            val mid1 = sortedList[(size / 2) - 1].value
-            val mid2 = sortedList[size / 2].value
-            (mid1 + mid2) / 2.0
+            val size = sortedList.size
+            return if (size % 2 == 1) {
+                sortedList[size / 2].value
+            } else {
+                val mid1 = sortedList[(size / 2) - 1].value
+                val mid2 = sortedList[size / 2].value
+                (mid1 + mid2) / 2.0
+            }
         }
+        return -999.999
     }
 }

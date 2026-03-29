@@ -11,17 +11,10 @@ object AnomalyDetectionRepo {
 
         val time = measurement.time!!.toJavaLocalDateTime().atOffset(ZoneOffset.UTC)
 
-        val anomalyId = insertInto(ANOMALIES)
-            .columns(
-                ANOMALIES.MEASUREMENT_SENSOR_ID,
-                ANOMALIES.MEASUREMENT_TYPE_ID,
-                ANOMALIES.MEASUREMENT_TIME
+        val anomalyId = insertInto(ANOMALIES).columns(
+                ANOMALIES.MEASUREMENT_SENSOR_ID, ANOMALIES.MEASUREMENT_TYPE_ID, ANOMALIES.MEASUREMENT_TIME
             ).values(
-                measurement.sensor.id!!,
-                measurement.measurementType.id,
-                time
-            )
-            .onDuplicateKeyIgnore()
-            .execute()
+                measurement.sensor.id!!, measurement.measurementType.id, time
+            ).onDuplicateKeyIgnore().execute()
     }
 }
