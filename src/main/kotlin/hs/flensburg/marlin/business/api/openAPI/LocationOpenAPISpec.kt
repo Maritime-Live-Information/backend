@@ -12,13 +12,14 @@ object LocationOpenAPISpec {
 
     val getLocation: RouteConfig.() -> Unit = {
         tags("location")
-        description = "Get a location."
+        description = "Get a location"
         request {
             pathParameter<Long>("id") {
                 description = "The location ID (not the sensor ID)"
             }
             queryParameter<String>("timezone") {
-                description = "Optional timezone ('Europe/Berlin'). Defaults to Ip address based timezone. Backup UTC."
+                description =
+                    "Optional timezone ('Europe/Berlin'). Defaults to Ip address based timezone. Backup UTC."
                 required = false
             }
         }
@@ -35,7 +36,7 @@ object LocationOpenAPISpec {
 
     val getLocationImage: RouteConfig.() -> Unit = {
         tags("location")
-        description = "Get a location image."
+        description = "Get a location image"
         request {
             pathParameter<Long>("id") {
                 description = "The location ID (not the sensor ID)"
@@ -118,7 +119,7 @@ object LocationOpenAPISpec {
 
     val deleteLocationImage: RouteConfig.() -> Unit = {
         tags("location")
-        description = "Delete a location image."
+        description = "Delete a locations image"
         request {
             pathParameter<Long>("id") {
                 description = "The location ID (not the sensor ID)"

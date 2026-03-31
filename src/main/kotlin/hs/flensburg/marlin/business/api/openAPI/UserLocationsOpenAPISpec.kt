@@ -8,8 +8,8 @@ import io.ktor.http.HttpStatusCode
 object UserLocationsOpenAPISpec {
 
     val getUserLocation: RouteConfig.() -> Unit = {
+        description = "Get a user location by its ID "
         tags("user-locations")
-        description = "Get a user location by its ID."
         request {
             pathParameter<Long>("id") {
                 description = "ID of the user location"

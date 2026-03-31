@@ -3,11 +3,7 @@ package hs.flensburg.marlin.business.api.users.boundary
 import hs.flensburg.marlin.business.Page
 import hs.flensburg.marlin.business.api.auth.entity.LoggedInUser
 import hs.flensburg.marlin.business.api.openAPI.UserOpenAPISpec
-import hs.flensburg.marlin.business.api.users.entity.BlacklistUserRequest
-import hs.flensburg.marlin.business.api.users.entity.CreateUserProfileRequest
-import hs.flensburg.marlin.business.api.users.entity.UpdateUserProfileRequest
-import hs.flensburg.marlin.business.api.users.entity.UpdateUserRequest
-import hs.flensburg.marlin.business.api.users.entity.UserSearchParameters
+import hs.flensburg.marlin.business.api.users.entity.*
 import hs.flensburg.marlin.plugins.Realm
 import hs.flensburg.marlin.plugins.authenticate
 import hs.flensburg.marlin.plugins.respondKIO
